@@ -1,0 +1,1534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dungeon Quest Enhanced - Soohoon Lee</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto Mono', monospace;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #00ff00;
+        }
+
+        .game-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #0f0f1e;
+            border: 3px solid #00ff00;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .game-header {
+            background: #1a1a2e;
+            padding: 20px;
+            border-bottom: 2px solid #00ff00;
+            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .game-title {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1.3rem;
+            color: #00ff00;
+            text-shadow: 0 0 10px #00ff00;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .header-btn {
+            background: #1a1a2e;
+            border: 2px solid #00aa00;
+            color: #00ff00;
+            padding: 8px 15px;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.75rem;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .header-btn:hover {
+            background: #00aa00;
+            color: #0f0f1e;
+        }
+
+        .sound-btn.muted {
+            color: #ff6b6b;
+            border-color: #ff6b6b;
+        }
+
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            padding: 15px;
+            background: #161625;
+            border-bottom: 2px solid #00ff00;
+        }
+
+        .stat-item {
+            background: #1a1a2e;
+            padding: 8px;
+            border: 2px solid #00aa00;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.65rem;
+            color: #00cc00;
+            margin-bottom: 3px;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #00ff00;
+        }
+
+        .health-bar, .mana-bar, .xp-bar-mini {
+            width: 100%;
+            height: 8px;
+            background: #1a1a2e;
+            border: 1px solid #00aa00;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 3px;
+        }
+
+        .health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff00, #00cc00);
+            transition: width 0.5s ease;
+        }
+
+        .mana-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00aaff, #0066ff);
+            transition: width 0.5s ease;
+        }
+
+        .xp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ffaa00, #ff8800);
+            transition: width 0.5s ease;
+        }
+
+        .class-badge {
+            font-size: 0.6rem;
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin-top: 3px;
+            display: inline-block;
+        }
+
+        .class-badge.warrior { background: #ff6b6b; color: #0f0f1e; }
+        .class-badge.mage { background: #aa88ff; color: #0f0f1e; }
+        .class-badge.rogue { background: #88ff88; color: #0f0f1e; }
+
+        .game-screen {
+            padding: 25px;
+            min-height: 450px;
+        }
+
+        .story-text {
+            font-size: 1rem;
+            line-height: 1.8;
+            color: #00ff00;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: rgba(0, 255, 0, 0.05);
+            border-left: 3px solid #00ff00;
+            animation: fadeIn 0.5s ease-in;
+            white-space: pre-line;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .combat-log {
+            background: #1a1a2e;
+            border: 2px solid #00aa00;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+
+        .combat-log::-webkit-scrollbar { width: 8px; }
+        .combat-log::-webkit-scrollbar-track { background: #0f0f1e; }
+        .combat-log::-webkit-scrollbar-thumb { background: #00aa00; border-radius: 4px; }
+
+        .log-entry {
+            margin-bottom: 6px;
+            padding: 4px;
+            animation: slideIn 0.3s ease-out;
+            font-size: 0.9rem;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .log-entry.player { color: #00ffff; }
+        .log-entry.enemy { color: #ff6b6b; }
+        .log-entry.system { color: #ffaa00; }
+        .log-entry.critical { color: #ff00ff; font-weight: bold; }
+        .log-entry.status { color: #aa88ff; }
+        .log-entry.heal { color: #88ff88; }
+
+        .choices {
+            display: grid;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .choice-btn {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border: 2px solid #00aa00;
+            color: #00ff00;
+            padding: 12px 20px;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .choice-btn:hover {
+            background: linear-gradient(135deg, #00aa00, #00ff00);
+            color: #0f0f1e;
+            border-color: #00ff00;
+            transform: translateX(10px);
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+        }
+
+        .choice-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .choice-btn:disabled:hover {
+            transform: none;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: #00ff00;
+        }
+
+        .choice-btn.ability {
+            border-color: #aa88ff;
+        }
+
+        .choice-btn.ability:hover {
+            background: linear-gradient(135deg, #aa88ff, #cc88ff);
+        }
+
+        .ability-cost {
+            font-size: 0.75rem;
+            color: #00aaff;
+            margin-left: 10px;
+        }
+
+        .cooldown-indicator {
+            font-size: 0.75rem;
+            color: #ff6b6b;
+            margin-left: 10px;
+        }
+
+        .enemy-display {
+            background: #1a1a2e;
+            border: 2px solid #ff6b6b;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .enemy-name {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1rem;
+            color: #ff6b6b;
+            margin-bottom: 8px;
+        }
+
+        .enemy-health-bar {
+            width: 100%;
+            height: 20px;
+            background: #0f0f1e;
+            border: 2px solid #ff6b6b;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .enemy-health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #ff5252);
+            transition: width 0.5s ease;
+        }
+
+        .status-effects {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .status-effect {
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+
+        .status-effect.poison { background: #88ff88; color: #0f0f1e; }
+        .status-effect.burn { background: #ff8844; color: #0f0f1e; }
+        .status-effect.stun { background: #ffff00; color: #0f0f1e; }
+        .status-effect.bleed { background: #ff4444; color: white; }
+        .status-effect.defense-up { background: #4488ff; color: white; }
+
+        /* Class Selection Screen */
+        .class-selection {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .class-card {
+            background: #1a1a2e;
+            border: 3px solid #00aa00;
+            border-radius: 10px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .class-card:hover {
+            border-color: #00ff00;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 255, 0, 0.3);
+        }
+
+        .class-card.warrior:hover { border-color: #ff6b6b; box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3); }
+        .class-card.mage:hover { border-color: #aa88ff; box-shadow: 0 10px 30px rgba(170, 136, 255, 0.3); }
+        .class-card.rogue:hover { border-color: #88ff88; box-shadow: 0 10px 30px rgba(136, 255, 136, 0.3); }
+
+        .class-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        .class-name {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+
+        .class-card.warrior .class-name { color: #ff6b6b; }
+        .class-card.mage .class-name { color: #aa88ff; }
+        .class-card.rogue .class-name { color: #88ff88; }
+
+        .class-stats {
+            font-size: 0.8rem;
+            color: #00cc00;
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+
+        .class-abilities {
+            font-size: 0.75rem;
+            color: #ffaa00;
+            border-top: 1px solid #00aa00;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+
+        .inventory {
+            background: #1a1a2e;
+            border: 2px solid #00aa00;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+
+        .inventory-title {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.8rem;
+            color: #00ff00;
+            margin-bottom: 15px;
+        }
+
+        .inventory-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
+        }
+
+        .inventory-item {
+            background: #0f0f1e;
+            border: 2px solid #00aa00;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .item-name {
+            color: #00ff00;
+            font-weight: 700;
+            margin-bottom: 5px;
+            font-size: 0.85rem;
+        }
+
+        .item-quantity {
+            color: #00cc00;
+            font-size: 0.8rem;
+        }
+
+        .shop {
+            background: #1a1a2e;
+            border: 2px solid #ffaa00;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+
+        .shop-title {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.9rem;
+            color: #ffaa00;
+            margin-bottom: 15px;
+        }
+
+        .shop-items {
+            display: grid;
+            gap: 10px;
+        }
+
+        .shop-item {
+            background: #0f0f1e;
+            border: 2px solid #ffaa00;
+            padding: 12px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .shop-item-info { flex: 1; min-width: 150px; }
+        .shop-item-name { color: #ffaa00; font-weight: 700; margin-bottom: 3px; font-size: 0.9rem; }
+        .shop-item-desc { color: #cc8800; font-size: 0.8rem; }
+        .shop-item-price { color: #ffaa00; font-weight: 700; }
+
+        .buy-btn {
+            background: #ffaa00;
+            color: #0f0f1e;
+            border: none;
+            padding: 8px 16px;
+            font-family: 'Roboto Mono', monospace;
+            font-weight: 700;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            font-size: 0.85rem;
+        }
+
+        .buy-btn:hover { background: #ffcc00; transform: scale(1.05); }
+        .buy-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .game-over {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .game-over-title {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+        }
+
+        .game-over-title.win { color: #00ff00; text-shadow: 0 0 20px #00ff00; }
+        .game-over-title.lose { color: #ff6b6b; text-shadow: 0 0 20px #ff6b6b; }
+
+        .restart-btn {
+            background: linear-gradient(135deg, #00aa00, #00ff00);
+            color: #0f0f1e;
+            border: none;
+            padding: 15px 40px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.8rem;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .restart-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.6);
+        }
+
+        .save-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #00aa00;
+            color: #0f0f1e;
+            padding: 12px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            animation: notificationSlide 2s ease-in-out forwards;
+            z-index: 1000;
+        }
+
+        @keyframes notificationSlide {
+            0% { transform: translateX(100%); opacity: 0; }
+            15% { transform: translateX(0); opacity: 1; }
+            85% { transform: translateX(0); opacity: 1; }
+            100% { transform: translateX(100%); opacity: 0; }
+        }
+
+        @media (max-width: 768px) {
+            .game-title { font-size: 0.9rem; }
+            .game-header { flex-direction: column; gap: 10px; }
+            .stats-bar { grid-template-columns: repeat(3, 1fr); }
+            .game-screen { padding: 15px; }
+            .story-text { font-size: 0.9rem; padding: 15px; }
+            .class-selection { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <div class="game-title">⚔️ DUNGEON QUEST ⚔️</div>
+            <div class="header-buttons">
+                <button class="header-btn sound-btn" onclick="toggleSound()" id="soundBtn">🔊 Sound</button>
+                <button class="header-btn" onclick="saveGame()">💾 Save</button>
+                <button class="header-btn" onclick="loadGame()">📂 Load</button>
+            </div>
+        </div>
+
+        <div class="stats-bar" id="statsBar" style="display: none;">
+            <div class="stat-item">
+                <div class="stat-label">❤️ Health</div>
+                <div class="stat-value" id="playerHealth">100/100</div>
+                <div class="health-bar">
+                    <div class="health-fill" id="playerHealthBar" style="width: 100%"></div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">💙 Mana</div>
+                <div class="stat-value" id="playerMana">50/50</div>
+                <div class="mana-bar">
+                    <div class="mana-fill" id="playerManaBar" style="width: 100%"></div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">⚔️ Attack</div>
+                <div class="stat-value" id="playerAttack">10</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">🛡️ Defense</div>
+                <div class="stat-value" id="playerDefense">5</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">💰 Gold</div>
+                <div class="stat-value" id="playerGold">50</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">⭐ Level</div>
+                <div class="stat-value" id="playerLevel">1</div>
+                <div class="xp-bar-mini">
+                    <div class="xp-fill" id="playerXPBar" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="game-screen" id="gameScreen">
+            <!-- Game content will be dynamically inserted here -->
+        </div>
+    </div>
+
+    <script>
+        // ============ AUDIO SYSTEM ============
+        const AudioSystem = {
+            enabled: true,
+            audioContext: null,
+            
+            init() {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            },
+            
+            ensureContext() {
+                if (!this.audioContext) this.init();
+                if (this.audioContext.state === 'suspended') {
+                    this.audioContext.resume();
+                }
+            },
+            
+            playTone(frequency, duration, type = 'square', volume = 0.3) {
+                if (!this.enabled) return;
+                this.ensureContext();
+                
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                oscillator.frequency.value = frequency;
+                oscillator.type = type;
+                gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
+                
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + duration);
+            },
+            
+            playAttack() {
+                this.playTone(200, 0.1, 'square', 0.2);
+                setTimeout(() => this.playTone(150, 0.1, 'square', 0.2), 50);
+            },
+            
+            playHit() {
+                this.playTone(100, 0.15, 'sawtooth', 0.25);
+            },
+            
+            playCritical() {
+                this.playTone(400, 0.1, 'square', 0.3);
+                setTimeout(() => this.playTone(600, 0.1, 'square', 0.3), 80);
+                setTimeout(() => this.playTone(800, 0.15, 'square', 0.3), 160);
+            },
+            
+            playHeal() {
+                this.playTone(523, 0.1, 'sine', 0.2);
+                setTimeout(() => this.playTone(659, 0.1, 'sine', 0.2), 100);
+                setTimeout(() => this.playTone(784, 0.15, 'sine', 0.2), 200);
+            },
+            
+            playLevelUp() {
+                const notes = [523, 659, 784, 1047];
+                notes.forEach((note, i) => {
+                    setTimeout(() => this.playTone(note, 0.2, 'square', 0.25), i * 150);
+                });
+            },
+            
+            playVictory() {
+                const melody = [523, 523, 523, 698, 784, 698, 784];
+                const durations = [0.15, 0.15, 0.15, 0.3, 0.5, 0.15, 0.5];
+                let time = 0;
+                melody.forEach((note, i) => {
+                    setTimeout(() => this.playTone(note, durations[i], 'square', 0.25), time);
+                    time += durations[i] * 600;
+                });
+            },
+            
+            playDefeat() {
+                const notes = [392, 349, 330, 262];
+                notes.forEach((note, i) => {
+                    setTimeout(() => this.playTone(note, 0.3, 'sawtooth', 0.2), i * 250);
+                });
+            },
+            
+            playPurchase() {
+                this.playTone(800, 0.1, 'square', 0.2);
+                setTimeout(() => this.playTone(1000, 0.15, 'square', 0.2), 100);
+            },
+            
+            playAbility() {
+                this.playTone(600, 0.1, 'sine', 0.3);
+                setTimeout(() => this.playTone(800, 0.1, 'sine', 0.3), 50);
+                setTimeout(() => this.playTone(1000, 0.15, 'sine', 0.3), 100);
+            },
+            
+            playStatusEffect() {
+                this.playTone(300, 0.2, 'triangle', 0.2);
+            }
+        };
+
+        function toggleSound() {
+            AudioSystem.enabled = !AudioSystem.enabled;
+            const btn = document.getElementById('soundBtn');
+            if (AudioSystem.enabled) {
+                btn.textContent = '🔊 Sound';
+                btn.classList.remove('muted');
+            } else {
+                btn.textContent = '🔇 Muted';
+                btn.classList.add('muted');
+            }
+        }
+
+        // ============ CLASS DEFINITIONS ============
+        const classes = {
+            warrior: {
+                name: "Warrior",
+                icon: "⚔️",
+                description: "A mighty fighter with high health and strength.",
+                baseStats: {
+                    maxHealth: 120,
+                    maxMana: 30,
+                    attack: 12,
+                    defense: 8,
+                    critChance: 0.1
+                },
+                abilities: [
+                    {
+                        name: "Power Strike",
+                        description: "A devastating blow dealing 200% damage",
+                        manaCost: 15,
+                        cooldown: 0,
+                        effect: (player, enemy) => {
+                            const damage = Math.floor(player.attack * 2 - enemy.defense + Math.random() * 8);
+                            enemy.health -= damage;
+                            AudioSystem.playAbility();
+                            return { damage, message: `⚔️ Power Strike deals ${damage} massive damage!`, type: 'critical' };
+                        }
+                    },
+                    {
+                        name: "Battle Cry",
+                        description: "Boost attack by 5 for 3 turns",
+                        manaCost: 10,
+                        cooldown: 0,
+                        effect: (player) => {
+                            player.statusEffects.push({ name: 'Attack Up', duration: 3, attackBonus: 5 });
+                            AudioSystem.playAbility();
+                            return { message: `📢 Battle Cry! Attack increased for 3 turns!`, type: 'system' };
+                        }
+                    }
+                ]
+            },
+            mage: {
+                name: "Mage",
+                icon: "🔮",
+                description: "A powerful spellcaster with devastating magic.",
+                baseStats: {
+                    maxHealth: 80,
+                    maxMana: 80,
+                    attack: 8,
+                    defense: 4,
+                    critChance: 0.15
+                },
+                abilities: [
+                    {
+                        name: "Fireball",
+                        description: "Launches a fireball dealing damage and burning the enemy",
+                        manaCost: 20,
+                        cooldown: 0,
+                        effect: (player, enemy) => {
+                            const damage = Math.floor(player.attack * 1.8 + 10);
+                            enemy.health -= damage;
+                            enemy.statusEffects.push({ name: 'Burn', duration: 3, damagePerTurn: 5 });
+                            AudioSystem.playAbility();
+                            return { damage, message: `🔥 Fireball hits for ${damage} and burns the enemy!`, type: 'critical' };
+                        }
+                    },
+                    {
+                        name: "Arcane Shield",
+                        description: "Creates a magical barrier, +10 defense for 2 turns",
+                        manaCost: 15,
+                        cooldown: 0,
+                        effect: (player) => {
+                            player.statusEffects.push({ name: 'Arcane Shield', duration: 2, defenseBonus: 10 });
+                            AudioSystem.playAbility();
+                            return { message: `🛡️ Arcane Shield activated! Defense boosted!`, type: 'system' };
+                        }
+                    }
+                ]
+            },
+            rogue: {
+                name: "Rogue",
+                icon: "🗡️",
+                description: "A swift assassin with high critical damage.",
+                baseStats: {
+                    maxHealth: 90,
+                    maxMana: 50,
+                    attack: 10,
+                    defense: 5,
+                    critChance: 0.25
+                },
+                abilities: [
+                    {
+                        name: "Backstab",
+                        description: "A sneaky attack that always crits for 250% damage",
+                        manaCost: 20,
+                        cooldown: 0,
+                        effect: (player, enemy) => {
+                            const damage = Math.floor(player.attack * 2.5 - enemy.defense * 0.5 + Math.random() * 10);
+                            enemy.health -= damage;
+                            AudioSystem.playCritical();
+                            return { damage, message: `🗡️ Backstab! Critical hit for ${damage} damage!`, type: 'critical' };
+                        }
+                    },
+                    {
+                        name: "Poison Blade",
+                        description: "Coats weapon with poison, dealing damage over time",
+                        manaCost: 15,
+                        cooldown: 0,
+                        effect: (player, enemy) => {
+                            const damage = Math.floor(player.attack * 0.8);
+                            enemy.health -= damage;
+                            enemy.statusEffects.push({ name: 'Poison', duration: 4, damagePerTurn: 8 });
+                            AudioSystem.playStatusEffect();
+                            return { damage, message: `☠️ Poison Blade hits for ${damage} and poisons the enemy!`, type: 'status' };
+                        }
+                    }
+                ]
+            }
+        };
+
+        // ============ GAME STATE ============
+        let player = null;
+        let currentEnemy = null;
+        let combatLog = [];
+        let gameStarted = false;
+
+        const enemies = {
+            goblin: {
+                name: "Goblin",
+                health: 35,
+                maxHealth: 35,
+                attack: 8,
+                defense: 2,
+                goldReward: 25,
+                xpReward: 35,
+                statusEffects: []
+            },
+            skeleton: {
+                name: "Skeleton Warrior",
+                health: 55,
+                maxHealth: 55,
+                attack: 12,
+                defense: 5,
+                goldReward: 40,
+                xpReward: 55,
+                statusEffects: []
+            },
+            orc: {
+                name: "Orc Berserker",
+                health: 90,
+                maxHealth: 90,
+                attack: 16,
+                defense: 7,
+                goldReward: 70,
+                xpReward: 90,
+                statusEffects: []
+            },
+            dragon: {
+                name: "Ancient Dragon",
+                health: 180,
+                maxHealth: 180,
+                attack: 28,
+                defense: 12,
+                goldReward: 250,
+                xpReward: 250,
+                statusEffects: []
+            }
+        };
+
+        // ============ SAVE/LOAD SYSTEM ============
+        function saveGame() {
+            if (!player) {
+                showNotification('No game to save!');
+                return;
+            }
+            const saveData = {
+                player: player,
+                gameStarted: gameStarted,
+                timestamp: Date.now()
+            };
+            localStorage.setItem('dungeonQuestSave', JSON.stringify(saveData));
+            showNotification('Game Saved!');
+            AudioSystem.playPurchase();
+        }
+
+        function loadGame() {
+            const saveData = localStorage.getItem('dungeonQuestSave');
+            if (!saveData) {
+                showNotification('No save found!');
+                return;
+            }
+            try {
+                const data = JSON.parse(saveData);
+                player = data.player;
+                gameStarted = true;
+                document.getElementById('statsBar').style.display = 'grid';
+                updateStats();
+                showStory('intro');
+                showNotification('Game Loaded!');
+                AudioSystem.playPurchase();
+            } catch (e) {
+                showNotification('Error loading save!');
+            }
+        }
+
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'save-notification';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 2000);
+        }
+
+        // ============ GAME FUNCTIONS ============
+        function initPlayer(className) {
+            const classData = classes[className];
+            player = {
+                class: className,
+                className: classData.name,
+                health: classData.baseStats.maxHealth,
+                maxHealth: classData.baseStats.maxHealth,
+                mana: classData.baseStats.maxMana,
+                maxMana: classData.baseStats.maxMana,
+                attack: classData.baseStats.attack,
+                defense: classData.baseStats.defense,
+                critChance: classData.baseStats.critChance,
+                gold: 50,
+                level: 1,
+                xp: 0,
+                xpToLevel: 100,
+                abilities: classData.abilities,
+                statusEffects: [],
+                inventory: {
+                    healthPotion: 2,
+                    manaPotion: 2
+                }
+            };
+            gameStarted = true;
+            document.getElementById('statsBar').style.display = 'grid';
+            updateStats();
+            AudioSystem.playLevelUp();
+            showStory('intro');
+        }
+
+        function updateStats() {
+            if (!player) return;
+            document.getElementById('playerHealth').textContent = `${player.health}/${player.maxHealth}`;
+            document.getElementById('playerHealthBar').style.width = `${(player.health / player.maxHealth) * 100}%`;
+            document.getElementById('playerMana').textContent = `${player.mana}/${player.maxMana}`;
+            document.getElementById('playerManaBar').style.width = `${(player.mana / player.maxMana) * 100}%`;
+            document.getElementById('playerAttack').textContent = player.attack + getAttackBonus();
+            document.getElementById('playerDefense').textContent = player.defense + getDefenseBonus();
+            document.getElementById('playerGold').textContent = player.gold;
+            document.getElementById('playerLevel').textContent = player.level;
+            document.getElementById('playerXPBar').style.width = `${(player.xp / player.xpToLevel) * 100}%`;
+        }
+
+        function getAttackBonus() {
+            return player.statusEffects.reduce((sum, e) => sum + (e.attackBonus || 0), 0);
+        }
+
+        function getDefenseBonus() {
+            return player.statusEffects.reduce((sum, e) => sum + (e.defenseBonus || 0), 0);
+        }
+
+        function addLog(message, type = 'system') {
+            combatLog.unshift(`<div class="log-entry ${type}">${message}</div>`);
+            if (combatLog.length > 12) combatLog.pop();
+        }
+
+        function displayCombatLog() {
+            return `<div class="combat-log">${combatLog.join('')}</div>`;
+        }
+
+        function checkLevelUp() {
+            while (player.xp >= player.xpToLevel) {
+                player.level++;
+                player.xp -= player.xpToLevel;
+                player.xpToLevel = Math.floor(player.xpToLevel * 1.4);
+                player.maxHealth += 15;
+                player.health = player.maxHealth;
+                player.maxMana += 10;
+                player.mana = player.maxMana;
+                player.attack += 3;
+                player.defense += 2;
+                player.critChance = Math.min(0.5, player.critChance + 0.02);
+                addLog(`🎉 LEVEL UP! You are now level ${player.level}!`, 'system');
+                AudioSystem.playLevelUp();
+            }
+            updateStats();
+        }
+
+        function processStatusEffects(target, isPlayer = false) {
+            const expiredEffects = [];
+            let totalDamage = 0;
+
+            target.statusEffects.forEach((effect, index) => {
+                if (effect.damagePerTurn) {
+                    totalDamage += effect.damagePerTurn;
+                    const effectName = effect.name.toLowerCase();
+                    addLog(`${effect.name} deals ${effect.damagePerTurn} damage!`, 'status');
+                }
+                effect.duration--;
+                if (effect.duration <= 0) {
+                    expiredEffects.push(index);
+                    addLog(`${effect.name} wore off.`, 'system');
+                }
+            });
+
+            if (totalDamage > 0) {
+                target.health -= totalDamage;
+                AudioSystem.playStatusEffect();
+            }
+
+            // Remove expired effects (in reverse to maintain indices)
+            expiredEffects.reverse().forEach(index => {
+                target.statusEffects.splice(index, 1);
+            });
+
+            return totalDamage;
+        }
+
+        function renderStatusEffects(effects) {
+            if (!effects || effects.length === 0) return '';
+            return `<div class="status-effects">
+                ${effects.map(e => `<span class="status-effect ${e.name.toLowerCase().replace(' ', '-')}">${e.name} (${e.duration})</span>`).join('')}
+            </div>`;
+        }
+
+        // ============ SCREENS ============
+        function showClassSelection() {
+            const gameScreen = document.getElementById('gameScreen');
+            gameScreen.innerHTML = `
+                <div class="story-text">Welcome, brave adventurer!
+
+Before you enter the dungeon, choose your path:</div>
+                <div class="class-selection">
+                    ${Object.entries(classes).map(([key, cls]) => `
+                        <div class="class-card ${key}" onclick="initPlayer('${key}')">
+                            <div class="class-icon">${cls.icon}</div>
+                            <div class="class-name">${cls.name}</div>
+                            <div class="class-stats">
+                                ❤️ HP: ${cls.baseStats.maxHealth}<br>
+                                💙 MP: ${cls.baseStats.maxMana}<br>
+                                ⚔️ ATK: ${cls.baseStats.attack}<br>
+                                🛡️ DEF: ${cls.baseStats.defense}<br>
+                                🎯 Crit: ${Math.round(cls.baseStats.critChance * 100)}%
+                            </div>
+                            <div class="class-abilities">
+                                <strong>Abilities:</strong><br>
+                                ${cls.abilities.map(a => `• ${a.name}`).join('<br>')}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function showStory(scene) {
+            const gameScreen = document.getElementById('gameScreen');
+            
+            const scenes = {
+                intro: {
+                    text: `${classes[player.class].icon} ${player.className}, you stand at the entrance of a dark, mysterious dungeon.
+
+Legends speak of great treasures hidden within, guarded by fearsome monsters. Many have entered, but few have returned.
+
+Your journey begins now. What will you do?`,
+                    choices: [
+                        { text: "🚪 Enter the dungeon", action: () => showStory('firstRoom') },
+                        { text: "🛡️ Check your equipment", action: () => showInventory() },
+                        { text: "📖 Learn about the dungeon", action: () => showStory('lore') }
+                    ]
+                },
+                lore: {
+                    text: `The dungeon was once a grand castle, home to a powerful wizard. After his mysterious disappearance, monsters claimed the halls as their own.
+
+Rumor has it that the wizard's greatest treasure still lies deep within the lowest chamber, guarded by an ancient dragon.`,
+                    choices: [
+                        { text: "⬅️ Back to entrance", action: () => showStory('intro') }
+                    ]
+                },
+                firstRoom: {
+                    text: `You push open the heavy stone door and enter the dungeon. Torches flicker on the walls, casting eerie shadows.
+
+As your eyes adjust to the dim light, you hear a guttural growl. A GOBLIN jumps out from behind a broken pillar!`,
+                    choices: [
+                        { text: "⚔️ Fight the Goblin", action: () => startCombat('goblin') },
+                        { text: "🏃 Run back to entrance", action: () => showStory('intro') }
+                    ]
+                },
+                afterFirstBattle: {
+                    text: `The goblin falls defeated! You collect the loot and catch your breath.
+
+Ahead, you see two paths: one leads deeper into the dungeon, where you hear the clanking of bones. The other leads to a dimly lit room with the smell of roasting meat.`,
+                    choices: [
+                        { text: "💀 Follow the sound of bones", action: () => startCombat('skeleton') },
+                        { text: "🏪 Enter the lit room (Shop)", action: () => showShop() },
+                        { text: "🚪 Return to entrance", action: () => showStory('intro') }
+                    ]
+                },
+                deeperDungeon: {
+                    text: `You venture deeper into the dungeon. The air grows colder and the walls are covered in ancient runes.
+
+Suddenly, a massive ORC BERSERKER blocks your path, wielding a huge battle axe!`,
+                    choices: [
+                        { text: "⚔️ Fight the Orc", action: () => startCombat('orc') },
+                        { text: "🔙 Retreat", action: () => showStory('afterFirstBattle') }
+                    ]
+                },
+                dragonLair: {
+                    text: `You descend to the lowest chamber of the dungeon. The room is vast, filled with mountains of gold and ancient artifacts.
+
+At the center, an ANCIENT DRAGON awakens from its slumber. Its eyes glow with an otherworldly fire.
+
+This is the final battle!`,
+                    choices: [
+                        { text: "⚔️ Face the Dragon!", action: () => startCombat('dragon') },
+                        { text: "🔙 Retreat (for now)", action: () => showStory('deeperDungeon') }
+                    ]
+                }
+            };
+
+            const currentScene = scenes[scene];
+            let html = `<div class="story-text">${currentScene.text}</div>`;
+            html += `<div class="choices">`;
+            currentScene.choices.forEach(choice => {
+                html += `<button class="choice-btn" onclick="(${choice.action.toString()})()">${choice.text}</button>`;
+            });
+            html += `</div>`;
+            gameScreen.innerHTML = html;
+        }
+
+        function showInventory() {
+            const gameScreen = document.getElementById('gameScreen');
+            const cls = classes[player.class];
+            
+            let html = `<div class="story-text">📦 ${player.className}'s Equipment
+
+${cls.icon} Class: ${player.className}
+🎯 Critical Chance: ${Math.round(player.critChance * 100)}%</div>`;
+            
+            html += `<div class="inventory">
+                <div class="inventory-title">🎒 Items</div>
+                <div class="inventory-items">
+                    <div class="inventory-item">
+                        <div class="item-name">❤️ Health Potion</div>
+                        <div class="item-quantity">x${player.inventory.healthPotion}</div>
+                    </div>
+                    <div class="inventory-item">
+                        <div class="item-name">💙 Mana Potion</div>
+                        <div class="item-quantity">x${player.inventory.manaPotion}</div>
+                    </div>
+                </div>
+            </div>`;
+            
+            html += `<div class="inventory" style="border-color: #aa88ff;">
+                <div class="inventory-title" style="color: #aa88ff;">✨ Abilities</div>
+                <div class="inventory-items">
+                    ${player.abilities.map(a => `
+                        <div class="inventory-item" style="border-color: #aa88ff;">
+                            <div class="item-name" style="color: #aa88ff;">${a.name}</div>
+                            <div class="item-quantity">Cost: ${a.manaCost} MP</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>`;
+            
+            html += `<div class="choices">
+                <button class="choice-btn" onclick="showStory('intro')">⬅️ Back</button>
+            </div>`;
+            gameScreen.innerHTML = html;
+        }
+
+        function showShop() {
+            const gameScreen = document.getElementById('gameScreen');
+            let html = `<div class="story-text">🏪 A mysterious merchant sits by a fire, surrounded by potions and weapons.
+
+"Welcome, ${player.className}! Care to browse my wares?"</div>`;
+            
+            html += `<div class="shop">
+                <div class="shop-title">💰 Merchant's Shop (Your Gold: ${player.gold})</div>
+                <div class="shop-items">
+                    <div class="shop-item">
+                        <div class="shop-item-info">
+                            <div class="shop-item-name">❤️ Health Potion</div>
+                            <div class="shop-item-desc">Restores 50 HP</div>
+                        </div>
+                        <div class="shop-item-price">30 Gold</div>
+                        <button class="buy-btn" onclick="buyItem('healthPotion', 30)" ${player.gold < 30 ? 'disabled' : ''}>Buy</button>
+                    </div>
+                    <div class="shop-item">
+                        <div class="shop-item-info">
+                            <div class="shop-item-name">💙 Mana Potion</div>
+                            <div class="shop-item-desc">Restores 30 MP</div>
+                        </div>
+                        <div class="shop-item-price">25 Gold</div>
+                        <button class="buy-btn" onclick="buyItem('manaPotion', 25)" ${player.gold < 25 ? 'disabled' : ''}>Buy</button>
+                    </div>
+                    <div class="shop-item">
+                        <div class="shop-item-info">
+                            <div class="shop-item-name">⚔️ Weapon Upgrade</div>
+                            <div class="shop-item-desc">+5 Attack</div>
+                        </div>
+                        <div class="shop-item-price">80 Gold</div>
+                        <button class="buy-btn" onclick="buyUpgrade('attack', 5, 80)" ${player.gold < 80 ? 'disabled' : ''}>Buy</button>
+                    </div>
+                    <div class="shop-item">
+                        <div class="shop-item-info">
+                            <div class="shop-item-name">🛡️ Armor Upgrade</div>
+                            <div class="shop-item-desc">+3 Defense</div>
+                        </div>
+                        <div class="shop-item-price">70 Gold</div>
+                        <button class="buy-btn" onclick="buyUpgrade('defense', 3, 70)" ${player.gold < 70 ? 'disabled' : ''}>Buy</button>
+                    </div>
+                    <div class="shop-item">
+                        <div class="shop-item-info">
+                            <div class="shop-item-name">💜 Max Health +20</div>
+                            <div class="shop-item-desc">Permanently increase HP</div>
+                        </div>
+                        <div class="shop-item-price">100 Gold</div>
+                        <button class="buy-btn" onclick="buyMaxHealth()" ${player.gold < 100 ? 'disabled' : ''}>Buy</button>
+                    </div>
+                </div>
+            </div>`;
+            
+            html += `<div class="choices">
+                <button class="choice-btn" onclick="showStory('afterFirstBattle')">⬅️ Leave Shop</button>
+            </div>`;
+            gameScreen.innerHTML = html;
+        }
+
+        function buyItem(item, cost) {
+            if (player.gold >= cost) {
+                player.gold -= cost;
+                player.inventory[item]++;
+                updateStats();
+                addLog(`Purchased ${item}!`, 'system');
+                AudioSystem.playPurchase();
+                showShop();
+            }
+        }
+
+        function buyUpgrade(stat, amount, cost) {
+            if (player.gold >= cost) {
+                player.gold -= cost;
+                player[stat] += amount;
+                updateStats();
+                addLog(`Upgraded ${stat} by ${amount}!`, 'system');
+                AudioSystem.playPurchase();
+                showShop();
+            }
+        }
+
+        function buyMaxHealth() {
+            if (player.gold >= 100) {
+                player.gold -= 100;
+                player.maxHealth += 20;
+                player.health = Math.min(player.health + 20, player.maxHealth);
+                updateStats();
+                addLog(`Max Health increased by 20!`, 'system');
+                AudioSystem.playPurchase();
+                showShop();
+            }
+        }
+
+        // ============ COMBAT SYSTEM ============
+        function startCombat(enemyType) {
+            currentEnemy = JSON.parse(JSON.stringify(enemies[enemyType]));
+            currentEnemy.statusEffects = [];
+            combatLog = [];
+            addLog(`⚔️ A ${currentEnemy.name} appears!`, 'enemy');
+            showCombat();
+        }
+
+        function showCombat() {
+            const gameScreen = document.getElementById('gameScreen');
+            const totalDefense = player.defense + getDefenseBonus();
+            const totalAttack = player.attack + getAttackBonus();
+            
+            let html = `<div class="enemy-display">
+                <div class="enemy-name">${currentEnemy.name}</div>
+                <div class="stat-value">HP: ${currentEnemy.health}/${currentEnemy.maxHealth}</div>
+                <div class="enemy-health-bar">
+                    <div class="enemy-health-fill" style="width: ${(currentEnemy.health / currentEnemy.maxHealth) * 100}%"></div>
+                </div>
+                ${renderStatusEffects(currentEnemy.statusEffects)}
+            </div>`;
+            
+            html += displayCombatLog();
+            
+            // Player status effects display
+            if (player.statusEffects.length > 0) {
+                html += `<div style="margin-bottom: 15px; text-align: center;">
+                    <span style="color: #00cc00; font-size: 0.8rem;">Your buffs:</span>
+                    ${renderStatusEffects(player.statusEffects)}
+                </div>`;
+            }
+            
+            html += `<div class="choices">
+                <button class="choice-btn" onclick="playerAttackEnemy()">⚔️ Attack</button>
+                <button class="choice-btn" onclick="playerDefend()">🛡️ Defend (+5 DEF this turn)</button>`;
+            
+            // Class abilities
+            player.abilities.forEach((ability, index) => {
+                const canUse = player.mana >= ability.manaCost;
+                html += `<button class="choice-btn ability" onclick="useAbility(${index})" ${!canUse ? 'disabled' : ''}>
+                    ✨ ${ability.name} <span class="ability-cost">(${ability.manaCost} MP)</span>
+                </button>`;
+            });
+            
+            html += `<button class="choice-btn" onclick="useHealthPotion()" ${player.inventory.healthPotion <= 0 ? 'disabled' : ''}>
+                    ❤️ Health Potion (x${player.inventory.healthPotion})
+                </button>
+                <button class="choice-btn" onclick="useManaPotion()" ${player.inventory.manaPotion <= 0 ? 'disabled' : ''}>
+                    💙 Mana Potion (x${player.inventory.manaPotion})
+                </button>
+            </div>`;
+            
+            gameScreen.innerHTML = html;
+        }
+
+        function playerAttackEnemy() {
+            const totalAttack = player.attack + getAttackBonus();
+            let damage = Math.max(1, totalAttack - currentEnemy.defense + Math.floor(Math.random() * 6));
+            
+            // Critical hit check
+            const isCrit = Math.random() < player.critChance;
+            if (isCrit) {
+                damage = Math.floor(damage * 1.8);
+                addLog(`💥 CRITICAL HIT! You strike for ${damage} damage!`, 'critical');
+                AudioSystem.playCritical();
+            } else {
+                addLog(`You attack for ${damage} damage!`, 'player');
+                AudioSystem.playAttack();
+            }
+            
+            currentEnemy.health -= damage;
+            
+            if (currentEnemy.health <= 0) {
+                winCombat();
+            } else {
+                enemyTurn();
+            }
+        }
+
+        function playerDefend() {
+            player.statusEffects.push({ name: 'Defense Up', duration: 1, defenseBonus: 5 });
+            addLog(`🛡️ You brace yourself for the next attack!`, 'player');
+            enemyTurn();
+        }
+
+        function useAbility(index) {
+            const ability = player.abilities[index];
+            if (player.mana < ability.manaCost) return;
+            
+            player.mana -= ability.manaCost;
+            const result = ability.effect(player, currentEnemy);
+            addLog(result.message, result.type);
+            updateStats();
+            
+            if (currentEnemy.health <= 0) {
+                winCombat();
+            } else {
+                enemyTurn();
+            }
+        }
+
+        function useHealthPotion() {
+            if (player.inventory.healthPotion > 0) {
+                player.inventory.healthPotion--;
+                const healAmount = 50;
+                player.health = Math.min(player.maxHealth, player.health + healAmount);
+                addLog(`🧪 You drink a health potion and restore ${healAmount} HP!`, 'heal');
+                AudioSystem.playHeal();
+                updateStats();
+                enemyTurn();
+            }
+        }
+
+        function useManaPotion() {
+            if (player.inventory.manaPotion > 0) {
+                player.inventory.manaPotion--;
+                const manaAmount = 30;
+                player.mana = Math.min(player.maxMana, player.mana + manaAmount);
+                addLog(`🧪 You drink a mana potion and restore ${manaAmount} MP!`, 'heal');
+                AudioSystem.playHeal();
+                updateStats();
+                enemyTurn();
+            }
+        }
+
+        function enemyTurn() {
+            // Process enemy status effects first
+            processStatusEffects(currentEnemy);
+            
+            if (currentEnemy.health <= 0) {
+                winCombat();
+                return;
+            }
+            
+            // Check if enemy is stunned
+            const isStunned = currentEnemy.statusEffects.some(e => e.name === 'Stun');
+            if (isStunned) {
+                addLog(`${currentEnemy.name} is stunned and can't move!`, 'system');
+            } else {
+                const totalDefense = player.defense + getDefenseBonus();
+                const damage = Math.max(1, currentEnemy.attack - totalDefense + Math.floor(Math.random() * 6));
+                player.health -= damage;
+                addLog(`${currentEnemy.name} attacks for ${damage} damage!`, 'enemy');
+                AudioSystem.playHit();
+            }
+            
+            // Process player status effects
+            processStatusEffects(player, true);
+            
+            updateStats();
+            
+            if (player.health <= 0) {
+                gameOver(false);
+            } else {
+                showCombat();
+            }
+        }
+
+        function winCombat() {
+            player.gold += currentEnemy.goldReward;
+            player.xp += currentEnemy.xpReward;
+            player.statusEffects = []; // Clear combat buffs
+            
+            addLog(`💀 ${currentEnemy.name} defeated!`, 'system');
+            addLog(`💰 +${currentEnemy.goldReward} gold, ⭐ +${currentEnemy.xpReward} XP!`, 'system');
+            
+            AudioSystem.playVictory();
+            updateStats();
+            checkLevelUp();
+            
+            // Mana regeneration on victory
+            player.mana = Math.min(player.maxMana, player.mana + 15);
+            updateStats();
+
+            const gameScreen = document.getElementById('gameScreen');
+            let html = `<div class="story-text">🎉 Victory!
+
+You defeated the ${currentEnemy.name}!
+
+Rewards:
+💰 ${currentEnemy.goldReward} Gold
+⭐ ${currentEnemy.xpReward} XP
+💙 +15 Mana restored</div>`;
+
+            if (currentEnemy.name === "Ancient Dragon") {
+                gameOver(true);
+                return;
+            }
+
+            html += `<div class="choices">`;
+            
+            if (currentEnemy.name === "Goblin") {
+                html += `<button class="choice-btn" onclick="showStory('afterFirstBattle')">➡️ Continue</button>`;
+            } else if (currentEnemy.name === "Skeleton Warrior") {
+                html += `<button class="choice-btn" onclick="showStory('deeperDungeon')">➡️ Go Deeper</button>`;
+                html += `<button class="choice-btn" onclick="showShop()">🏪 Visit Shop</button>`;
+            } else if (currentEnemy.name === "Orc Berserker") {
+                html += `<button class="choice-btn" onclick="showStory('dragonLair')">🐉 Enter Dragon's Lair</button>`;
+                html += `<button class="choice-btn" onclick="showShop()">🏪 Visit Shop</button>`;
+            }
+            
+            html += `</div>`;
+            gameScreen.innerHTML = html;
+        }
+
+        function gameOver(won) {
+            const gameScreen = document.getElementById('gameScreen');
+            
+            if (won) {
+                AudioSystem.playVictory();
+                gameScreen.innerHTML = `
+                    <div class="game-over">
+                        <div class="game-over-title win">🏆 VICTORY! 🏆</div>
+                        <div class="story-text">
+You have defeated the Ancient Dragon and claimed the wizard's treasure!
+
+The dungeon is yours, brave ${player.className}!
+
+Final Stats:
+${classes[player.class].icon} Class: ${player.className}
+⭐ Level: ${player.level}
+💰 Gold: ${player.gold}
+⚔️ Attack: ${player.attack}
+🛡️ Defense: ${player.defense}
+🎯 Crit Chance: ${Math.round(player.critChance * 100)}%
+                        </div>
+                        <button class="restart-btn" onclick="startNewGame()">Play Again</button>
+                    </div>
+                `;
+            } else {
+                AudioSystem.playDefeat();
+                gameScreen.innerHTML = `
+                    <div class="game-over">
+                        <div class="game-over-title lose">💀 DEFEAT 💀</div>
+                        <div class="story-text">
+You have fallen in the dungeon...
+
+But brave adventurers never give up!
+
+${classes[player.class].icon} ${player.className} reached Level ${player.level}
+                        </div>
+                        <button class="restart-btn" onclick="startNewGame()">Try Again</button>
+                    </div>
+                `;
+            }
+            
+            // Clear save on game over
+            localStorage.removeItem('dungeonQuestSave');
+        }
+
+        function startNewGame() {
+            player = null;
+            currentEnemy = null;
+            combatLog = [];
+            gameStarted = false;
+            document.getElementById('statsBar').style.display = 'none';
+            showClassSelection();
+        }
+
+        // ============ INITIALIZE ============
+        // Check for existing save on load
+        window.onload = function() {
+            const saveData = localStorage.getItem('dungeonQuestSave');
+            if (saveData) {
+                const gameScreen = document.getElementById('gameScreen');
+                gameScreen.innerHTML = `
+                    <div class="story-text">⚔️ Welcome back, adventurer!
+
+A saved game was found. Would you like to continue your journey?</div>
+                    <div class="choices">
+                        <button class="choice-btn" onclick="loadGame()">📂 Continue Saved Game</button>
+                        <button class="choice-btn" onclick="startNewGame()">🆕 Start New Game</button>
+                    </div>
+                `;
+            } else {
+                showClassSelection();
+            }
+        };
+    </script>
+</body>
+</html>
