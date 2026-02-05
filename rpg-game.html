@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Adventure RPG - Soohoon Lee</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto Mono', monospace;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #00ff00;
+        }
+
+        .game-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #0f0f1e;
+            border: 3px solid #00ff00;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .game-header {
+            background: #1a1a2e;
+            padding: 20px;
+            border-bottom: 2px solid #00ff00;
+            text-align: center;
+        }
+
+        .game-title {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1.5rem;
+            color: #00ff00;
+            text-shadow: 0 0 10px #00ff00;
+            margin-bottom: 10px;
+        }
+
+        .game-subtitle {
+            font-size: 0.9rem;
+            color: #00cc00;
+        }
+
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            padding: 20px;
+            background: #161625;
+            border-bottom: 2px solid #00ff00;
+        }
+
+        .stat-item {
+            background: #1a1a2e;
+            padding: 10px;
+            border: 2px solid #00aa00;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: #00cc00;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #00ff00;
+        }
+
+        .health-bar {
+            width: 100%;
+            height: 20px;
+            background: #1a1a2e;
+            border: 2px solid #00aa00;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+
+        .health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff00, #00cc00);
+            transition: width 0.5s ease;
+        }
+
+        .game-screen {
+            padding: 30px;
+            min-height: 400px;
+        }
+
+        .story-text {
+            font-size: 1rem;
+            line-height: 1.8;
+            color: #00ff00;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: rgba(0, 255, 0, 0.05);
+            border-left: 3px solid #00ff00;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .combat-log {
+            background: #1a1a2e;
+            border: 2px solid #00aa00;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .combat-log::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .combat-log::-webkit-scrollbar-track {
+            background: #0f0f1e;
+        }
+
+        .combat-log::-webkit-scrollbar-thumb {
+            background: #00aa00;
+            border-radius: 4px;
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 5px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .log-entry.player {
+            color: #00ffff;
+        }
+
+        .log-entry.enemy {
+            color: #ff6b6b;
+        }
+
+        .log-entry.system {
+            color: #ffaa00;
+        }
+
+        .choices {
+            display: grid;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .choice-btn {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border: 2px solid #00aa00;
+            color: #00ff00;
+            padding: 15px 25px;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .choice-btn:hover {
+            background: linear-gradient(135deg, #00aa00, #00ff00);
+            color: #0f0f1e;
+            border-color: #00ff00;
+            transform: translateX(10px);
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+        }
+
+        .choice-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .choice-btn:disabled:hover {
+            transform: none;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: #00ff00;
+        }
+
+        .enemy-display {
+            background: #1a1a2e;
+            border: 2px solid #ff6b6b;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .enemy-name {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1.2rem;
+            color: #ff6b6b;
+            margin-bottom: 10px;
+        }
+
+        .enemy-health-bar {
+            width: 100%;
+            height: 25px;
+            background: #0f0f1e;
+            border: 2px solid #ff6b6b;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .enemy-health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #ff5252);
+            transition: width 0.5s ease;
+        }
+
+        .inventory {
+            background: #1a1a2e;
+            border: 2px solid #00aa00;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+
+        .inventory-title {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.8rem;
+            color: #00ff00;
+            margin-bottom: 15px;
+        }
+
+        .inventory-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .inventory-item {
+            background: #0f0f1e;
+            border: 2px solid #00aa00;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .item-name {
+            color: #00ff00;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .item-quantity {
+            color: #00cc00;
+            font-size: 0.85rem;
+        }
+
+        .shop {
+            background: #1a1a2e;
+            border: 2px solid #ffaa00;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+
+        .shop-title {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.9rem;
+            color: #ffaa00;
+            margin-bottom: 15px;
+        }
+
+        .shop-items {
+            display: grid;
+            gap: 10px;
+        }
+
+        .shop-item {
+            background: #0f0f1e;
+            border: 2px solid #ffaa00;
+            padding: 15px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .shop-item-info {
+            flex: 1;
+        }
+
+        .shop-item-name {
+            color: #ffaa00;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .shop-item-desc {
+            color: #cc8800;
+            font-size: 0.85rem;
+        }
+
+        .shop-item-price {
+            color: #ffaa00;
+            font-weight: 700;
+            margin-right: 15px;
+        }
+
+        .buy-btn {
+            background: #ffaa00;
+            color: #0f0f1e;
+            border: none;
+            padding: 10px 20px;
+            font-family: 'Roboto Mono', monospace;
+            font-weight: 700;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .buy-btn:hover {
+            background: #ffcc00;
+            transform: scale(1.05);
+        }
+
+        .buy-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .game-over {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .game-over-title {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        .game-over-title.win {
+            color: #00ff00;
+            text-shadow: 0 0 20px #00ff00;
+        }
+
+        .game-over-title.lose {
+            color: #ff6b6b;
+            text-shadow: 0 0 20px #ff6b6b;
+        }
+
+        .restart-btn {
+            background: linear-gradient(135deg, #00aa00, #00ff00);
+            color: #0f0f1e;
+            border: none;
+            padding: 15px 40px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .restart-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.6);
+        }
+
+        @media (max-width: 768px) {
+            .game-title {
+                font-size: 1rem;
+            }
+
+            .stats-bar {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .game-screen {
+                padding: 20px;
+            }
+
+            .story-text {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <div class="game-title">⚔️ DUNGEON QUEST ⚔️</div>
+            <div class="game-subtitle">A Text-Based Adventure</div>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-label">❤️ Health</div>
+                <div class="stat-value" id="playerHealth">100/100</div>
+                <div class="health-bar">
+                    <div class="health-fill" id="playerHealthBar" style="width: 100%"></div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">⚔️ Attack</div>
+                <div class="stat-value" id="playerAttack">10</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">🛡️ Defense</div>
+                <div class="stat-value" id="playerDefense">5</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">💰 Gold</div>
+                <div class="stat-value" id="playerGold">50</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">⭐ Level</div>
+                <div class="stat-value" id="playerLevel">1</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">🎯 XP</div>
+                <div class="stat-value" id="playerXP">0/100</div>
+            </div>
+        </div>
+
+        <div class="game-screen" id="gameScreen">
+            <!-- Game content will be dynamically inserted here -->
+        </div>
+    </div>
+
+    <script>
+        // Player data
+        let player = {
+            health: 100,
+            maxHealth: 100,
+            attack: 10,
+            defense: 5,
+            gold: 50,
+            level: 1,
+            xp: 0,
+            xpToLevel: 100,
+            inventory: {
+                healthPotion: 2,
+                manaPotion: 1
+            }
+        };
+
+        // Enemy templates
+        const enemies = {
+            goblin: {
+                name: "Goblin",
+                health: 30,
+                maxHealth: 30,
+                attack: 8,
+                defense: 2,
+                goldReward: 20,
+                xpReward: 30
+            },
+            skeleton: {
+                name: "Skeleton Warrior",
+                health: 50,
+                maxHealth: 50,
+                attack: 12,
+                defense: 4,
+                goldReward: 35,
+                xpReward: 50
+            },
+            orc: {
+                name: "Orc Berserker",
+                health: 80,
+                maxHealth: 80,
+                attack: 15,
+                defense: 6,
+                goldReward: 60,
+                xpReward: 80
+            },
+            dragon: {
+                name: "Ancient Dragon",
+                health: 150,
+                maxHealth: 150,
+                attack: 25,
+                defense: 10,
+                goldReward: 200,
+                xpReward: 200
+            }
+        };
+
+        let currentEnemy = null;
+        let combatLog = [];
+
+        // Update stats display
+        function updateStats() {
+            document.getElementById('playerHealth').textContent = `${player.health}/${player.maxHealth}`;
+            document.getElementById('playerHealthBar').style.width = `${(player.health / player.maxHealth) * 100}%`;
+            document.getElementById('playerAttack').textContent = player.attack;
+            document.getElementById('playerDefense').textContent = player.defense;
+            document.getElementById('playerGold').textContent = player.gold;
+            document.getElementById('playerLevel').textContent = player.level;
+            document.getElementById('playerXP').textContent = `${player.xp}/${player.xpToLevel}`;
+        }
+
+        // Add to combat log
+        function addLog(message, type = 'system') {
+            combatLog.unshift(`<div class="log-entry ${type}">${message}</div>`);
+            if (combatLog.length > 10) combatLog.pop();
+        }
+
+        // Display combat log
+        function displayCombatLog() {
+            return `<div class="combat-log">${combatLog.join('')}</div>`;
+        }
+
+        // Check if player levels up
+        function checkLevelUp() {
+            if (player.xp >= player.xpToLevel) {
+                player.level++;
+                player.xp -= player.xpToLevel;
+                player.xpToLevel = Math.floor(player.xpToLevel * 1.5);
+                player.maxHealth += 20;
+                player.health = player.maxHealth;
+                player.attack += 5;
+                player.defense += 2;
+                addLog(`🎉 LEVEL UP! You are now level ${player.level}!`, 'system');
+                updateStats();
+            }
+        }
+
+        // Start game
+        function startGame() {
+            showStory('intro');
+        }
+
+        // Show story scene
+        function showStory(scene) {
+            const gameScreen = document.getElementById('gameScreen');
+            
+            const scenes = {
+                intro: {
+                    text: `Welcome, brave adventurer! You stand at the entrance of a dark, mysterious dungeon. 
+                    
+Legends speak of great treasures hidden within, guarded by fearsome monsters. Many have entered, but few have returned.
+
+Your journey begins now. What will you do?`,
+                    choices: [
+                        { text: "🚪 Enter the dungeon", action: () => showStory('firstRoom') },
+                        { text: "🛡️ Check your equipment", action: () => showInventory() },
+                        { text: "📖 Learn about the dungeon", action: () => showStory('lore') }
+                    ]
+                },
+                lore: {
+                    text: `The dungeon was once a grand castle, home to a powerful wizard. After his mysterious disappearance, monsters claimed the halls as their own.
+
+Rumor has it that the wizard's greatest treasure still lies deep within the lowest chamber, guarded by an ancient dragon.`,
+                    choices: [
+                        { text: "⬅️ Back to entrance", action: () => showStory('intro') }
+                    ]
+                },
+                firstRoom: {
+                    text: `You push open the heavy stone door and enter the dungeon. Torches flicker on the walls, casting eerie shadows.
+
+As your eyes adjust to the dim light, you hear a guttural growl. A GOBLIN jumps out from behind a broken pillar!`,
+                    choices: [
+                        { text: "⚔️ Fight the Goblin", action: () => startCombat('goblin') },
+                        { text: "🏃 Run back to entrance", action: () => showStory('intro') }
+                    ]
+                },
+                afterFirstBattle: {
+                    text: `The goblin falls defeated! You collect the loot and catch your breath.
+
+Ahead, you see two paths: one leads deeper into the dungeon, where you hear the clanking of bones. The other leads to a dimly lit room with the smell of roasting meat.`,
+                    choices: [
+                        { text: "💀 Follow the sound of bones", action: () => startCombat('skeleton') },
+                        { text: "🏪 Enter the lit room (Shop)", action: () => showShop() },
+                        { text: "🚪 Return to entrance", action: () => showStory('intro') }
+                    ]
+                },
+                deeperDungeon: {
+                    text: `You venture deeper into the dungeon. The air grows colder and the walls are covered in ancient runes.
+
+Suddenly, a massive ORC BERSERKER blocks your path, wielding a huge battle axe!`,
+                    choices: [
+                        { text: "⚔️ Fight the Orc", action: () => startCombat('orc') },
+                        { text: "🔙 Retreat", action: () => showStory('afterFirstBattle') }
+                    ]
+                },
+                dragonLair: {
+                    text: `You descend to the lowest chamber of the dungeon. The room is vast, filled with mountains of gold and ancient artifacts.
+
+At the center, an ANCIENT DRAGON awakens from its slumber. Its eyes glow with an otherworldly fire.
+
+This is the final battle!`,
+                    choices: [
+                        { text: "⚔️ Face the Dragon!", action: () => startCombat('dragon') },
+                        { text: "🔙 Retreat (for now)", action: () => showStory('deeperDungeon') }
+                    ]
+                }
+            };
+
+            const currentScene = scenes[scene];
+            let html = `<div class="story-text">${currentScene.text}</div>`;
+            html += `<div class="choices">`;
+            currentScene.choices.forEach(choice => {
+                html += `<button class="choice-btn" onclick="(${choice.action.toString()})()">${choice.text}</button>`;
+            });
+            html += `</div>`;
+
+            gameScreen.innerHTML = html;
+        }
+
+        // Show inventory
+        function showInventory() {
+            const gameScreen = document.getElementById('gameScreen');
+            let html = `<div class="story-text">📦 Your Inventory</div>`;
+            html += `<div class="inventory">
+                <div class="inventory-title">Items</div>
+                <div class="inventory-items">
+                    <div class="inventory-item">
+                        <div class="item-name">❤️ Health Potion</div>
+                        <div class="item-quantity">x${player.inventory.healthPotion}</div>
+                    </div>
+                    <div class="inventory-item">
+                        <div class="item-name">💙 Mana Potion</div>
+                        <div class="item-quantity">x${player.inventory.manaPotion}</div>
+                    </div>
+                </div>
+            </div>`;
+            html += `<div class="choices">
+                <button class="choice-btn" onclick="showStory('intro')">⬅️ Back</button>
+            </div>`;
+            gameScreen.innerHTML = html;
+        }
+
+        // Show shop
+        function showShop() {
+            const gameScreen = document.getElementById('gameScreen');
+            let html = `<div class="story-text">🏪 A mysterious merchant sits by a fire, surrounded by potions and weapons.
+
+"Welcome, traveler! Care to browse my wares?"</div>`;
+            html += `<div class="shop">
+                <div class="shop-title">💰 Merchant's Shop</div>
+                <div class="shop-items">
+                    <div class="shop-item">
+                        <div class="shop-item-info">
+                            <div class="shop-item-name">❤️ Health Potion</div>
+                            <div class="shop-item-desc">Restores 50 HP</div>
+                        </div>
+                        <div class="shop-item-price">30 Gold</div>
+                        <button class="buy-btn" onclick="buyItem('healthPotion', 30)" ${player.gold < 30 ? 'disabled' : ''}>Buy</button>
+                    </div>
+                    <div class="shop-item">
+                        <div class="shop-item-info">
+                            <div class="shop-item-name">⚔️ Iron Sword</div>
+                            <div class="shop-item-desc">+5 Attack</div>
+                        </div>
+                        <div class="shop-item-price">80 Gold</div>
+                        <button class="buy-btn" onclick="buyUpgrade('attack', 5, 80)" ${player.gold < 80 ? 'disabled' : ''}>Buy</button>
+                    </div>
+                    <div class="shop-item">
+                        <div class="shop-item-info">
+                            <div class="shop-item-name">🛡️ Steel Armor</div>
+                            <div class="shop-item-desc">+3 Defense</div>
+                        </div>
+                        <div class="shop-item-price">100 Gold</div>
+                        <button class="buy-btn" onclick="buyUpgrade('defense', 3, 100)" ${player.gold < 100 ? 'disabled' : ''}>Buy</button>
+                    </div>
+                </div>
+            </div>`;
+            html += `<div class="choices">
+                <button class="choice-btn" onclick="showStory('afterFirstBattle')">⬅️ Leave Shop</button>
+            </div>`;
+            gameScreen.innerHTML = html;
+        }
+
+        // Buy item
+        function buyItem(item, cost) {
+            if (player.gold >= cost) {
+                player.gold -= cost;
+                player.inventory[item]++;
+                updateStats();
+                addLog(`Purchased ${item}!`, 'system');
+                showShop();
+            }
+        }
+
+        // Buy upgrade
+        function buyUpgrade(stat, amount, cost) {
+            if (player.gold >= cost) {
+                player.gold -= cost;
+                player[stat] += amount;
+                updateStats();
+                addLog(`Upgraded ${stat} by ${amount}!`, 'system');
+                showShop();
+            }
+        }
+
+        // Start combat
+        function startCombat(enemyType) {
+            currentEnemy = JSON.parse(JSON.stringify(enemies[enemyType]));
+            combatLog = [];
+            addLog(`⚔️ A ${currentEnemy.name} appears!`, 'enemy');
+            showCombat();
+        }
+
+        // Show combat screen
+        function showCombat() {
+            const gameScreen = document.getElementById('gameScreen');
+            let html = `<div class="enemy-display">
+                <div class="enemy-name">${currentEnemy.name}</div>
+                <div class="stat-value">HP: ${currentEnemy.health}/${currentEnemy.maxHealth}</div>
+                <div class="enemy-health-bar">
+                    <div class="enemy-health-fill" style="width: ${(currentEnemy.health / currentEnemy.maxHealth) * 100}%"></div>
+                </div>
+            </div>`;
+            html += displayCombatLog();
+            html += `<div class="choices">
+                <button class="choice-btn" onclick="playerAttackEnemy()">⚔️ Attack</button>
+                <button class="choice-btn" onclick="playerDefend()">🛡️ Defend (Reduce damage next turn)</button>
+                <button class="choice-btn" onclick="useHealthPotion()" ${player.inventory.healthPotion <= 0 ? 'disabled' : ''}>
+                    ❤️ Use Health Potion (x${player.inventory.healthPotion})
+                </button>
+            </div>`;
+            gameScreen.innerHTML = html;
+        }
+
+        // Player attacks enemy
+        function playerAttackEnemy() {
+            const damage = Math.max(1, player.attack - currentEnemy.defense + Math.floor(Math.random() * 5));
+            currentEnemy.health -= damage;
+            addLog(`You attack for ${damage} damage!`, 'player');
+
+            if (currentEnemy.health <= 0) {
+                winCombat();
+            } else {
+                enemyAttackPlayer();
+            }
+        }
+
+        // Player defends
+        function playerDefend() {
+            addLog(`You brace yourself for the next attack!`, 'player');
+            const originalDefense = player.defense;
+            player.defense += 5;
+            enemyAttackPlayer();
+            player.defense = originalDefense;
+        }
+
+        // Enemy attacks player
+        function enemyAttackPlayer() {
+            const damage = Math.max(1, currentEnemy.attack - player.defense + Math.floor(Math.random() * 5));
+            player.health -= damage;
+            addLog(`${currentEnemy.name} attacks for ${damage} damage!`, 'enemy');
+            updateStats();
+
+            if (player.health <= 0) {
+                gameOver(false);
+            } else {
+                showCombat();
+            }
+        }
+
+        // Use health potion
+        function useHealthPotion() {
+            if (player.inventory.healthPotion > 0) {
+                player.inventory.healthPotion--;
+                const healAmount = 50;
+                player.health = Math.min(player.maxHealth, player.health + healAmount);
+                addLog(`You drink a health potion and restore ${healAmount} HP!`, 'player');
+                updateStats();
+                enemyAttackPlayer();
+            }
+        }
+
+        // Win combat
+        function winCombat() {
+            player.gold += currentEnemy.goldReward;
+            player.xp += currentEnemy.xpReward;
+            addLog(`💀 ${currentEnemy.name} defeated!`, 'system');
+            addLog(`💰 You gained ${currentEnemy.goldReward} gold and ${currentEnemy.xpReward} XP!`, 'system');
+            updateStats();
+            checkLevelUp();
+
+            const gameScreen = document.getElementById('gameScreen');
+            let html = `<div class="story-text">🎉 Victory!
+
+You defeated the ${currentEnemy.name}!
+
+Rewards:
+💰 ${currentEnemy.goldReward} Gold
+⭐ ${currentEnemy.xpReward} XP</div>`;
+
+            if (currentEnemy.name === "Ancient Dragon") {
+                gameOver(true);
+                return;
+            }
+
+            html += `<div class="choices">`;
+            
+            if (currentEnemy.name === "Goblin") {
+                html += `<button class="choice-btn" onclick="showStory('afterFirstBattle')">➡️ Continue</button>`;
+            } else if (currentEnemy.name === "Skeleton Warrior") {
+                html += `<button class="choice-btn" onclick="showStory('deeperDungeon')">➡️ Go Deeper</button>`;
+                html += `<button class="choice-btn" onclick="showShop()">🏪 Visit Shop</button>`;
+            } else if (currentEnemy.name === "Orc Berserker") {
+                html += `<button class="choice-btn" onclick="showStory('dragonLair')">🐉 Enter Dragon's Lair</button>`;
+                html += `<button class="choice-btn" onclick="showShop()">🏪 Visit Shop</button>`;
+            }
+            
+            html += `</div>`;
+            gameScreen.innerHTML = html;
+        }
+
+        // Game over
+        function gameOver(won) {
+            const gameScreen = document.getElementById('gameScreen');
+            if (won) {
+                gameScreen.innerHTML = `
+                    <div class="game-over">
+                        <div class="game-over-title win">🏆 VICTORY! 🏆</div>
+                        <div class="story-text">
+                            You have defeated the Ancient Dragon and claimed the wizard's treasure!
+                            
+                            The dungeon is yours, brave hero!
+                            
+                            Final Stats:
+                            Level: ${player.level}
+                            Gold: ${player.gold}
+                            Attack: ${player.attack}
+                            Defense: ${player.defense}
+                        </div>
+                        <button class="restart-btn" onclick="location.reload()">Play Again</button>
+                    </div>
+                `;
+            } else {
+                gameScreen.innerHTML = `
+                    <div class="game-over">
+                        <div class="game-over-title lose">💀 DEFEAT 💀</div>
+                        <div class="story-text">
+                            You have fallen in the dungeon...
+                            
+                            But brave adventurers never give up!
+                            
+                            You reached Level ${player.level}
+                        </div>
+                        <button class="restart-btn" onclick="location.reload()">Try Again</button>
+                    </div>
+                `;
+            }
+        }
+
+        // Initialize game
+        updateStats();
+        startGame();
+    </script>
+</body>
+</html>
